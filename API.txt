@@ -1,0 +1,122 @@
+# API Документация для медицинского бота
+
+Базовый URL: http://localhost:8000
+
+## Аутентификация
+Все запросы требуют заголовок:
+X-API-Key: your_secure_admin_key_here
+
+## Эндпоинты
+
+1. Получить список всех пользователей
+GET /users/
+Ответ: Массив пользователей
+[
+    {
+        "telegram_id": 123456789,
+        "full_name": "Иванов Иван Иванович",
+        "age": 30,
+        "height": 175,
+        "weight": 75,
+        "has_chronic_diseases": true,
+        "chronic_diseases_info": "Гипертония",
+        "has_travel_restrictions": false,
+        "has_foreign_passport": true,
+        "specialization_type": "ВРАЧ",
+        "doctor_specialization": "Врач терапевт",
+        "other_specialization": null,
+        "contact_info": "@ivanov_ivan",
+        "resume": "Опыт работы...",
+        "registration_attempts": 1,
+        "created_at": "2024-02-24T10:30:00"
+    },
+    ...
+]
+
+2. Получить все анкеты конкретного пользователя
+GET /users/{telegram_id}
+Ответ: Массив анкет пользователя, отсортированных по дате создания
+[
+    {
+        // Структура ответа аналогична предыдущему эндпоинту
+    },
+    ...
+]
+
+3. Получить последнюю анкету пользователя
+GET /users/latest/{telegram_id}
+Ответ: Последняя анкета пользователя
+{
+    // Структура ответа аналогична предыдущему эндпоинту
+}
+
+4. Получить пользователей по специализации
+GET /users/by-specialization/{spec_type}
+Параметры запроса:
+- spec_type: DOCTOR | PARAMEDIC | OTHER
+- has_foreign_passport: true | false (опционально)
+- doctor_spec: Enum[DoctorSpecialization] (опционально)
+- other_spec: Enum[OtherSpecialization] (опционально)
+
+5. Отправить сообщение пользователям
+POST /send-message/
+Тело запроса:
+{
+    "text": "Ваше сообщение",
+    "user_ids": [123456789, 987654321]  // опционально, если не указать - отправка всем
+}
+Ответ:
+{
+    "status": "success",
+    "message": "Messages sent"
+}
+
+6. Получить базовую статистику
+GET /statistics/
+Ответ:
+{
+    "total_unique_users": 100,
+    "total_forms_submitted": 150,
+    "specializations_distribution": {
+        "ВРАЧ": 30,
+        "ФЕЛЬДШЕР": 45,
+        "ИНОЕ": 25
+    }
+}
+
+7. Получить расширенную статистику
+GET /statistics/extended/
+Ответ:
+{
+    "total_unique_users": 100,
+    "total_forms_submitted": 150,
+    "specialization_types": {
+        "ВРАЧ": 30,
+        "ФЕЛЬДШЕР": 45,
+        "ИНОЕ": 25
+    },
+    "foreign_passport_distribution": {
+        "true": 80,
+        "false": 20
+    },
+    "doctor_specializations": {
+        "Врач терапевт": 10,
+        "Врач Хирург": 8,
+        "Врач Анестезиолог-Реаниматолог": 12,
+        // ... и т.д.
+    }
+}
+
+## Коды ошибок
+- 403: Неверный API ключ
+- 404: Пользователь не найден
+- 500: Внутренняя ошибка сервера
+
+## Примечания
+1. Все даты возвращаются в формате ISO 8601
+2. Все запросы должны содержать заголовок X-API-Key
+3. При отправке сообщений, если user_ids не указан, сообщение отправляется всем пользователям
+4. Статистика обновляется в реальном времени
+5. Количество попыток регистрации ограничено двумя на пользователя
+6. Поля doctor_specialization и other_specialization являются взаимоисключающими и зависят от значения specialization_type
+7. Поле chronic_diseases_info заполняется только если has_chronic_diseases = true
